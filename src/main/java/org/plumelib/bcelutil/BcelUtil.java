@@ -64,7 +64,14 @@ public final class BcelUtil {
       version = version.substring(2, 3);
     } else {
       // Since Java 9, from a version string like "11.0.1", extract "11".
-      version = version.substring(0, version.indexOf("."));
+      int i = version.indexOf(".");
+      if (i < 0) {
+        // Some Linux dockerfiles return only the major version number for
+        // the system property "java.version"; i.e., no ".<minor version>".
+        // Return 'version' unchanged in this case.
+      } else {
+        version = version.substring(0, i);
+      }
     }
     return Integer.parseInt(version);
   }
@@ -76,7 +83,7 @@ public final class BcelUtil {
    * private, static, etc), the return type, the method name, and the types of each of its
    * parameters.
    *
-   * <p>For example, if the orignal Java source declarationwas: private final String
+   * <p>For example, if the original Java source declaration was: private final String
    * constantToString (int index) Then the output of methodDeclarationToString would be: private
    * final java.lang.String constantToString (int)
    *
@@ -362,7 +369,8 @@ public final class BcelUtil {
     }
 
     try {
-      mgen.toString(); // ensure it can be formatted without exceptions
+      @SuppressWarnings("UnusedVariable")
+      String ignore = mgen.toString(); // ensure it can be formatted without exceptions
       mgen.getLineNumberTable(mgen.getConstantPool());
 
       InstructionList ilist = mgen.getInstructionList();
@@ -724,6 +732,7 @@ public final class BcelUtil {
    * @deprecated use {@link #binaryNameToType}
    */
   // TODO: Poor name because this handles any non-array, not just classes.
+  @SuppressWarnings("InlineMeSuggester")
   @Deprecated // use binaryNameToType
   public static Type classnameToType(@BinaryNameOrPrimitiveType String classname) {
     return binaryNameToType(classname);
