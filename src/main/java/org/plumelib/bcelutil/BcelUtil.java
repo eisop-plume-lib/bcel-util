@@ -1,9 +1,12 @@
 package org.plumelib.bcelutil;
 
+import com.google.errorprone.annotations.InlineMe;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Attribute;
 import org.apache.bcel.classfile.Code;
@@ -49,31 +52,34 @@ public final class BcelUtil {
   /** The type that represents String[]. */
   private static final Type stringArray = Type.getType("[Ljava.lang.String;");
 
-  /** The major version number of the Java runtime. */
+  /** The major version number of the Java runtime (JRE), such as 8, 11, or 17. */
   public static final int javaVersion = getJavaVersion();
 
+  // Keep in sync with SystemUtil.java (in the Checker Framework).
   /**
-   * Extract the major version number from the "java.version" system property.
+   * Returns the major version number from the "java.version" system property, such as 8, 11, or 17.
    *
    * @return the major version of the Java runtime
    */
   private static int getJavaVersion() {
     String version = System.getProperty("java.version");
+
+    // Up to Java 8, from a version string like "1.8.whatever", extract "8".
     if (version.startsWith("1.")) {
-      // Up to Java 8, from a version string like "1.8.whatever", extract "8".
-      version = version.substring(2, 3);
-    } else {
-      // Since Java 9, from a version string like "11.0.1", extract "11".
-      int i = version.indexOf(".");
-      if (i < 0) {
-        // Some Linux dockerfiles return only the major version number for
-        // the system property "java.version"; i.e., no ".<minor version>".
-        // Return 'version' unchanged in this case.
-      } else {
-        version = version.substring(0, i);
-      }
+      return Integer.parseInt(version.substring(2, 3));
     }
-    return Integer.parseInt(version);
+
+    // Since Java 9, from a version string like "11.0.1" or "11-ea" or "11u25", extract "11".
+    // The format is described at http://openjdk.java.net/jeps/223 .
+    final Pattern newVersionPattern = Pattern.compile("^(\\d+).*$");
+    final Matcher newVersionMatcher = newVersionPattern.matcher(version);
+    if (newVersionMatcher.matches()) {
+      String v = newVersionMatcher.group(1);
+      assert v != null : "@AssumeAssertion(nullness): inspection";
+      return Integer.parseInt(v);
+    }
+
+    throw new RuntimeException("Could not determine version from property java.version=" + version);
   }
 
   // 'ToString' methods
@@ -488,11 +494,8 @@ public final class BcelUtil {
    */
   public static void dump(JavaClass jc, File dumpDir) {
 
-    try {
-      dumpDir.mkdir();
-      File path = new File(dumpDir, jc.getClassName() + ".bcel");
-      PrintStream p = new PrintStream(path);
-
+    dumpDir.mkdir();
+    try (PrintStream p = new PrintStream(new File(dumpDir, jc.getClassName() + ".bcel"))) {
       // Print the class, superclass, and interfaces
       p.printf("class %s extends %s%n", jc.getClassName(), jc.getSuperclassName());
       String[] inames = jc.getInterfaceNames();
@@ -534,9 +537,6 @@ public final class BcelUtil {
       for (int ii = 0; ii < constants.length; ii++) {
         p.printf("  %d %s%n", ii, constants[ii]);
       }
-
-      p.close();
-
     } catch (Exception e) {
       throw new Error(
           "Unexpected error dumping JavaClass: " + jc.getClassName() + " to " + dumpDir.getName(),
@@ -732,8 +732,10 @@ public final class BcelUtil {
    * @deprecated use {@link #binaryNameToType}
    */
   // TODO: Poor name because this handles any non-array, not just classes.
-  @SuppressWarnings("InlineMeSuggester")
   @Deprecated // use binaryNameToType
+  @InlineMe(
+      replacement = "BcelUtil.binaryNameToType(classname)",
+      imports = "org.plumelib.bcelutil.BcelUtil")
   public static Type classnameToType(@BinaryNameOrPrimitiveType String classname) {
     return binaryNameToType(classname);
   }
@@ -784,7 +786,7 @@ public final class BcelUtil {
 
     Signatures.ClassnameAndDimensions cad =
         Signatures.ClassnameAndDimensions.parseFqBinaryName(classname);
-    Type eltType = classnameToType(cad.classname);
+    Type eltType = BcelUtil.binaryNameToType(cad.classname);
     if (cad.dimensions == 0) {
       return eltType;
     } else {

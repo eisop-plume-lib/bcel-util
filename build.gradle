@@ -4,16 +4,14 @@ plugins {
   // To create a fat jar build/libs/bcel-util-all.jar, run: ./gradlew shadowJar
   id 'com.github.johnrengelman.shadow' version '7.1.2'
 
-  // Formatting is disabled due to poor handling of type annotations; wait until
-  // this issue is fixed: https://github.com/google/google-java-format/issues/5
-  // // Code formatting with Google Java Format; defines targets "goJF" and "verJF".
-  // id 'com.github.sherter.google-java-format' version '0.7.1'
+  // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
+  id "com.diffplug.spotless" version "6.12.0"
 
   // Error Prone linter
-  id("net.ltgt.errorprone") version "2.0.2"
+  id("net.ltgt.errorprone") version "3.0.1"
 
   // Checker Framework pluggable type-checking
-  id 'org.checkerframework' version '0.6.6'
+  id 'org.checkerframework' version '0.6.20'
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
   id 'com.dorongold.task-tree' version '2.1.0'
@@ -23,14 +21,18 @@ repositories {
   mavenCentral()
 }
 
+ext.errorproneVersion = '2.16'
+
 dependencies {
   api group: 'org.checkerframework.annotatedlib', name: 'bcel', version: '6.5.0'
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
   // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
 
-  implementation 'org.plumelib:reflection-util:1.0.4'
+  implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
 
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+  implementation 'org.plumelib:reflection-util:1.0.5'
+
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
@@ -40,11 +42,6 @@ apply from: "${buildscript.sourceFile.parent}/gradle/mavencentral.gradle"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-task compileAll() {
-  dependsOn compileJava
-  dependsOn compileTestJava
-}
-
 test {
   useJUnitPlatform {
     includeEngines 'junit-jupiter'
@@ -52,18 +49,33 @@ test {
   }
 }
 
+spotless {
+  format 'misc', {
+    // define the files to apply `misc` to
+    target '*.gradle', '*.md', '.gitignore'
+
+    // define the steps to apply to those files
+    trimTrailingWhitespace()
+    indentWithSpaces(2)
+    endWithNewline()
+  }
+  java {
+    targetExclude("**/WeakIdentityHashMap.java")
+    googleJavaFormat()
+    formatAnnotations()
+  }
+}
+
 /// Error Prone linter
 
 dependencies {
-  errorprone("com.google.errorprone:error_prone_core:2.10.0")
-  // JDK 8 support for Error Prone:
-  errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
 }
 tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:all" << "-Werror"
   options.errorprone {
+    enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
     disable("ReferenceEquality") // Use Interning Checker instead.
-    disable("InlineMeSuggester") // I don't use tools to inline into clients
     // Code copied from BCEL that we don't want to change gratuitously.
     excludedPaths = ".*/org/plumelib/bcelutil/StackVer.java"
   }
@@ -75,14 +87,18 @@ apply plugin: 'org.checkerframework'
 
 checkerFramework {
   checkers = [
-    'org.checkerframework.checker.formatter.FormatterChecker',
     // TODO: 'org.checkerframework.checker.index.IndexChecker',
+    // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
+    // 'org.checkerframework.checker.calledmethods.CalledMethodsChecker',
+    'org.checkerframework.checker.formatter.FormatterChecker',
     'org.checkerframework.checker.interning.InterningChecker',
     'org.checkerframework.checker.lock.LockChecker',
     'org.checkerframework.checker.nullness.NullnessChecker',
     'org.checkerframework.checker.regex.RegexChecker',
+    'org.checkerframework.checker.resourceleak.ResourceLeakChecker',
     'org.checkerframework.checker.signature.SignatureChecker',
-    'org.checkerframework.common.initializedfields.InitializedFieldsChecker'
+    'org.checkerframework.checker.signedness.SignednessChecker',
+    'org.checkerframework.common.initializedfields.InitializedFieldsChecker',
   ]
   extraJavacArgs = [
     '-Werror',
@@ -112,18 +128,28 @@ javadoc {
   options.addStringOption('private', '-quiet')
   exclude 'org/plumelib/bcelutil/StackVer.java'
   options.with {
-    linksOffline 'https://docs.oracle.com/javase/8/docs/api/', 'https://docs.oracle.com/javase/8/docs/api/'
-    // this works locally but not on Travis?
-    //linksOffline 'https://commons.apache.org/proper/commons-bcel/apidocs/', 'https://commons.apache.org/proper/commons-bcel/apidocs/'
+    // "linksOffline 'https://docs.oracle.com/javase/8/docs/api/', ..."
+    // no longer works, because that URL redirects to https://docs.oracle.com/en/java/javase/19/ but not to any specific webpage under it.
+    // "linksOffline 'https://docs.oracle.com/en/java/javase/17/docs/api/', ..."
+    // does not works under JDK <= 17.
+    // Under JDK 11 and JDK 17, even with "-source 8", it yields error:
+    //   The code being documented uses packages in the unnamed module, but the packages defined in
+    //   https://docs.oracle.com/en/java/javase/17/docs/api/ are in named modules.
+    // See https://bugs.openjdk.org/browse/JDK-8274639
+    // JDK 18 has a "--link-modularity-mismatch" command-line option which is "info" or "warn".
+    // I think it would work to:
+    //  *   use JDK 8 links under JDK <= 17.
+    //  * use JDK 17 links, and "--link-modularity-mismatch info", under JDK > 17 (i.e., JDK >= 18).
+    // But it's easier to just not use "linksOffline".
   }
   if (JavaVersion.current().compareTo(org.gradle.api.JavaVersion.VERSION_1_9) >= 0) {
-      options.addStringOption("-release", "8");
+    options.addStringOption('source', '8')
   }
   doLast {
     if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
       ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	flags:'g', byline:true) {
-	fileset(dir: destinationDir)
+        flags:'g', byline:true) {
+        fileset(dir: destinationDir)
       }
     }
   }
@@ -136,13 +162,13 @@ task javadocWeb(type: Javadoc) {
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
   if (JavaVersion.current().compareTo(org.gradle.api.JavaVersion.VERSION_1_9) >= 0) {
-      options.addStringOption("-release", "8");
+    options.addStringOption('source', '8')
   }
   doLast {
     if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
       ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	flags:'g', byline:true) {
-	fileset(dir: destinationDir)
+        flags:'g', byline:true) {
+        fileset(dir: destinationDir)
       }
     }
   }
@@ -152,7 +178,7 @@ configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc "org.plumelib:require-javadoc:1.0.2"
+  requireJavadoc "org.plumelib:require-javadoc:1.0.6"
 }
 task requireJavadoc(type: JavaExec) {
   description = 'Ensures that Javadoc documentation exists.'
