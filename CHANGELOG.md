@@ -1,5 +1,19 @@
 # BCEL-Util change log
 
+## 1.2.1 (December 13, 2022)
+
+Removed deprecated methods:
+ * add_new_argument
+ * fetch_current_stack_map_table
+ * classnameToType
+
+Removed problematic dependency on `error_prone_core`.
+
+## 1.2.0 (December 12, 2022)
+
+Changed naming convention from snake_case to camelCase, which is idiomatic in Java.
+This is a huge incompatibility with the previous version, 1.1.16.
+
 ## 1.1.16 (October 12, 2022)
 
 - Compiles and runs under Java 18.

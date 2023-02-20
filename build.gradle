@@ -1,38 +1,38 @@
 plugins {
   id 'java-library'
 
-  // To create a fat jar build/libs/bcel-util-all.jar, run: ./gradlew shadowJar
+  // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
   id 'com.github.johnrengelman.shadow' version '7.1.2'
 
   // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
-  id "com.diffplug.spotless" version "6.12.0"
+  // Requires JDK 11 or higher.
+  id 'com.diffplug.spotless' version '6.14.0' apply false
 
   // Error Prone linter
-  id("net.ltgt.errorprone") version "3.0.1"
+  id('net.ltgt.errorprone') version '3.0.1'
 
   // Checker Framework pluggable type-checking
-  id 'org.checkerframework' version '0.6.20'
+  id 'org.checkerframework' version '0.6.23'
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
-  id 'com.dorongold.task-tree' version '2.1.0'
+  id 'com.dorongold.task-tree' version '2.1.1'
 }
 
 repositories {
   mavenCentral()
 }
 
-ext.errorproneVersion = '2.16'
+ext.errorproneVersion = '2.18.0'
 
 dependencies {
-  api group: 'org.checkerframework.annotatedlib', name: 'bcel', version: '6.5.0'
+  api 'org.checkerframework.annotatedlib:bcel:6.5.0'
   // For a locally-built commons-bcel, set $BCEL and use this line instead of the above.
   // implementation fileTree(dir: "$System.env.BCEL/target", include: 'bcel-6.2.0.2.jar')
 
-  implementation "com.google.errorprone:error_prone_core:${errorproneVersion}"
+  // implementation "com.google.errorprone:error_prone_core:${errorproneVersion}" // For @InlineMe.
+  implementation 'org.plumelib:reflection-util:1.0.6'
 
-  implementation 'org.plumelib:reflection-util:1.0.5'
-
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
@@ -49,20 +49,31 @@ test {
   }
 }
 
-spotless {
-  format 'misc', {
-    // define the files to apply `misc` to
-    target '*.gradle', '*.md', '.gitignore'
+ext.isJava11orHigher = JavaVersion.current() >= JavaVersion.VERSION_11
+if (isJava11orHigher) {
+  apply plugin: 'com.diffplug.spotless'
+  spotless {
+    format 'misc', {
+      // define the files to apply `misc` to
+      target '*.gradle', '*.md', '.gitignore'
 
-    // define the steps to apply to those files
-    trimTrailingWhitespace()
-    indentWithSpaces(2)
-    endWithNewline()
-  }
-  java {
-    targetExclude("**/WeakIdentityHashMap.java")
-    googleJavaFormat()
-    formatAnnotations()
+      // define the steps to apply to those files
+      trimTrailingWhitespace()
+      indentWithSpaces(2)
+      endWithNewline()
+    }
+    java {
+      targetExclude('**/WeakIdentityHashMap.java')
+      googleJavaFormat()
+      formatAnnotations()
+    }
+    groovyGradle {
+      target '**/*.gradle'
+      greclipse()  // which formatter Spotless should use to format .gradle files.
+      indentWithSpaces(2)
+      trimTrailingWhitespace()
+      // endWithNewline() // Don't want to end empty files with a newline
+    }
   }
 }
 
@@ -72,12 +83,13 @@ dependencies {
   errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
 }
 tasks.withType(JavaCompile).configureEach {
-  options.compilerArgs << "-Xlint:all" << "-Werror"
+  // "-processing" avoids javac warning "No processor claimed any of these annotations".
+  options.compilerArgs << '-Xlint:all,-processing' << '-Werror'
   options.errorprone {
     enabled = JavaVersion.current() != JavaVersion.VERSION_1_8
-    disable("ReferenceEquality") // Use Interning Checker instead.
+    disable('ReferenceEquality') // Use Interning Checker instead.
     // Code copied from BCEL that we don't want to change gratuitously.
-    excludedPaths = ".*/org/plumelib/bcelutil/StackVer.java"
+    excludedPaths = '.*/org/plumelib/bcelutil/StackVer.java'
   }
 }
 
@@ -93,10 +105,10 @@ dependencies {
 
 checkerFramework {
   checkers = [
-    // TODO: 'org.checkerframework.checker.index.IndexChecker',
     // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
     // 'org.checkerframework.checker.calledmethods.CalledMethodsChecker',
     'org.checkerframework.checker.formatter.FormatterChecker',
+    // TODO: 'org.checkerframework.checker.index.IndexChecker',
     'org.checkerframework.checker.interning.InterningChecker',
     'org.checkerframework.checker.lock.LockChecker',
     'org.checkerframework.checker.nullness.NullnessChecker',
@@ -108,7 +120,6 @@ checkerFramework {
   ]
   extraJavacArgs = [
     '-Werror',
-    '-Xlint:-processing', // because of Error Prone's "No processor claimed any of these annotations"
     '-AcheckPurityAnnotations',
     '-ArequirePrefixInWarningSuppressions',
     '-AwarnUnneededSuppressions',
@@ -117,12 +128,12 @@ checkerFramework {
 }
 
 // To use a locally-built Checker Framework, run gradle with "-PcfLocal".
-if (project.hasProperty("cfLocal")) {
-  def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
+if (project.hasProperty('cfLocal')) {
+  def cfHome = String.valueOf(System.getenv('CHECKERFRAMEWORK'))
   dependencies {
-    compileOnly files(cfHome + "/checker/dist/checker-qual.jar")
-    testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
-    checkerFramework files(cfHome + "/checker/dist/checker.jar")
+    compileOnly files(cfHome + '/checker/dist/checker-qual.jar')
+    testCompileOnly files(cfHome + '/checker/dist/checker-qual.jar')
+    checkerFramework files(cfHome + '/checker/dist/checker.jar')
   }
 }
 
@@ -152,18 +163,16 @@ javadoc {
     options.addStringOption('source', '8')
   }
   doLast {
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-        flags:'g', byline:true) {
-        fileset(dir: destinationDir)
-      }
+    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
+    flags:'g', byline:true) {
+      fileset(dir: destinationDir)
     }
   }
 }
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
-  description "Upload API documentation to website."
+  description 'Upload API documentation to website.'
   source = sourceSets.main.allJava
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
@@ -171,11 +180,9 @@ task javadocWeb(type: Javadoc) {
     options.addStringOption('source', '8')
   }
   doLast {
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-        flags:'g', byline:true) {
-        fileset(dir: destinationDir)
-      }
+    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
+    flags:'g', byline:true) {
+      fileset(dir: destinationDir)
     }
   }
 }
@@ -184,13 +191,13 @@ configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc "org.plumelib:require-javadoc:1.0.6"
+  requireJavadoc 'org.plumelib:require-javadoc:1.0.6'
 }
 task requireJavadoc(type: JavaExec) {
   description = 'Ensures that Javadoc documentation exists.'
-  mainClass = "org.plumelib.javadoc.RequireJavadoc"
+  mainClass = 'org.plumelib.javadoc.RequireJavadoc'
   classpath = configurations.requireJavadoc
-  args "src/main/java"
+  args 'src/main/java'
 }
 check.dependsOn requireJavadoc
 javadocWeb.dependsOn requireJavadoc
@@ -212,6 +219,6 @@ tasks.withType(JavaCompile) {
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description "Run etags to create an Emacs TAGS table"
-  commandLine "bash", "-c", "find src/ -name '*.java' | sort | xargs etags"
+  description 'Run etags to create an Emacs TAGS table'
+  commandLine 'bash', '-c', "find src/ -name '*.java' | sort | xargs etags"
 }
