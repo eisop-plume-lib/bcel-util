@@ -58,6 +58,13 @@ public final class BcelUtil {
   /**
    * Returns the major version number from the "java.version" system property, such as 8, 11, or 17.
    *
+   * <p>Two possible formats of the "java.version" system property are considered. Up to Java 8,
+   * from a version string like `1.8.whatever`, this method extracts 8. Since Java 9, from a version
+   * string like `11.0.1`, this method extracts 11.
+   *
+   * <p>Starting in Java 9, there is the int {@code Runtime.version().feature()}, but that does not
+   * exist on JDK 8.
+   *
    * @return the major version of the Java runtime
    */
   private static int getJavaVersion() {
@@ -69,9 +76,9 @@ public final class BcelUtil {
     }
 
     // Since Java 9, from a version string like "11.0.1" or "11-ea" or "11u25", extract "11".
-    // The format is described at http://openjdk.java.net/jeps/223 .
-    final Pattern newVersionPattern = Pattern.compile("^(\\d+).*$");
-    final Matcher newVersionMatcher = newVersionPattern.matcher(version);
+    // The format is described at http://openjdk.org/jeps/223 .
+    Pattern newVersionPattern = Pattern.compile("^(\\d+).*$");
+    Matcher newVersionMatcher = newVersionPattern.matcher(version);
     if (newVersionMatcher.matches()) {
       String v = newVersionMatcher.group(1);
       assert v != null : "@AssumeAssertion(nullness): inspection";
@@ -289,14 +296,8 @@ public final class BcelUtil {
         || classname.startsWith("sun.")) {
       return true;
     }
-    if (javaVersion <= 8) {
-      if (classname.startsWith("com.oracle.") || classname.startsWith("org.omg.")) {
-        return true;
-      }
-    } else {
-      if (classname.startsWith("netscape.javascript.") || classname.startsWith("org.graalvm.")) {
-        return true;
-      }
+    if (classname.startsWith("netscape.javascript.") || classname.startsWith("org.graalvm.")) {
+      return true;
     }
     return false;
   }
@@ -319,14 +320,8 @@ public final class BcelUtil {
         || classname.startsWith("sun/")) {
       return true;
     }
-    if (javaVersion <= 8) {
-      if (classname.startsWith("com/oracle/") || classname.startsWith("org/omg/")) {
-        return true;
-      }
-    } else {
-      if (classname.startsWith("netscape/javascript/") || classname.startsWith("org/graalvm/")) {
-        return true;
-      }
+    if (classname.startsWith("netscape/javascript/") || classname.startsWith("org/graalvm/")) {
+      return true;
     }
     return false;
   }
@@ -626,8 +621,6 @@ public final class BcelUtil {
     // Reset the current number of locals so that when other locals
     // are added they get added at the correct offset.
     mg.setMaxLocals();
-
-    return;
   }
 
   /**
@@ -769,7 +762,7 @@ public final class BcelUtil {
 
     Signatures.ClassnameAndDimensions cad =
         Signatures.ClassnameAndDimensions.parseFqBinaryName(classname);
-    Type eltType = fqBinaryNameToType(cad.classname);
+    Type eltType = binaryNameToType(cad.classname);
     if (cad.dimensions == 0) {
       return eltType;
     } else {
