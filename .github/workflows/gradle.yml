@@ -18,7 +18,9 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: ./gradlew build javadoc
+    - name: ./gradlew --console=plain -PcfLocal compileJava compileTestJava
+      run: ./gradlew --console=plain -PcfLocal compileJava compileTestJava
+    - name: ./gradlew build
       run: ./gradlew build
     - name: ./gradlew requireJavadoc
       run: ./gradlew requireJavadoc
