@@ -27,6 +27,8 @@ jobs:
          export JSR308="${JSR308:-$(cd .. && pwd -P)}"
          export CHECKERFRAMEWORK="${CHECKERFRAMEWORK:-$(pwd -P)/../checker-framework}"
          export PATH=$AFU/scripts:$JAVA_HOME/bin:$PATH
+    - name: List plume-scripts contents
+      run: ls -la /tmp/plume-scripts
     - name: Build Checker Framework
       run:
         /tmp/plume-scripts/git-clone-related eisop checker-framework ${CHECKERFRAMEWORK}
