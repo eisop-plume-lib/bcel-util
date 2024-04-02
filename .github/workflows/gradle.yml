@@ -18,8 +18,12 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: ./gradlew build javadoc
+    - name: ./gradlew build
       run: ./gradlew build
+    - name: Setup local CF
+      run: ./.setup-CF.sh
+    - name: ./gradlew -PcfLocal build
+      run: ./gradlew -PcfLocal build
     - name: ./gradlew requireJavadoc
       run: ./gradlew requireJavadoc
     - name: ./gradlew spotlessCheck
