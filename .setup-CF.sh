@@ -17,7 +17,6 @@ export CHECKERFRAMEWORK="${CHECKERFRAMEWORK:-$(pwd -P)/../checker-framework}"
 ## Build Checker Framework
 /tmp/plume-scripts/git-clone-related eisop checker-framework ${CHECKERFRAMEWORK}
 
-# This also builds annotation-tools
-(cd $CHECKERFRAMEWORK && checker/bin-devel/build.sh downloadjdk)
+(cd $CHECKERFRAMEWORK && ./gradlew assemble)
 
 echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`

@@ -19,9 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
     - name: Setup Environment
-      run: |
-        chmod +x ./.setup-CF.sh
-        ./.setup-CF.sh
+      run: ./.setup-CF.sh
     - name: ./gradlew -PcfLocal build
       run: ./gradlew -PcfLocal build
     - name: ./gradlew requireJavadoc
