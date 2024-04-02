@@ -19,20 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
     - name: Setup Environment
-      run:
-         echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
-         set -e
-         export JAVA_HOME=${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which javac))))}
-         git -C /tmp clone --depth 1 -q https://github.com/plume-lib/plume-scripts.git
-         export JSR308="${JSR308:-$(cd .. && pwd -P)}"
-         export CHECKERFRAMEWORK="${CHECKERFRAMEWORK:-$(pwd -P)/../checker-framework}"
-         export PATH=$AFU/scripts:$JAVA_HOME/bin:$PATH
-    - name: List plume-scripts contents
-      run: ls -la /tmp/plume-scripts
-    - name: Build Checker Framework
-      run:
-        /tmp/plume-scripts/git-clone-related eisop checker-framework ${CHECKERFRAMEWORK}
-        cd $CHECKERFRAMEWORK && checker/bin-devel/build.sh downloadjdk
+      run: ./setup-CF.sh
     - name: ./gradlew -PcfLocal build
       run: ./gradlew -PcfLocal build
     - name: ./gradlew requireJavadoc
