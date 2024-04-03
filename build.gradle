@@ -92,12 +92,12 @@ tasks.withType(JavaCompile).configureEach {
 
 apply plugin: 'org.checkerframework'
 
-def eisopVersion = '3.42.0-eisop3'
+def EISOPVersion = '3.42.0-eisop3'
 
 dependencies {
-  compileOnly 'io.github.eisop:checker-qual:$eisopVersion'
-  testCompileOnly 'io.github.eisop:checker-qual:$eisopVersion'
-  checkerFramework 'io.github.eisop:checker:$eisopVersion'
+  compileOnly "io.github.eisop:checker-qual:${EISOPVersion}"
+  testCompileOnly "io.github.eisop:checker-qual:${EISOPVersion}"
+  checkerFramework "io.github.eisop:checker:${EISOPVersion}"
 }
 
 checkerFramework {
