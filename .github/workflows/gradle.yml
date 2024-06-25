@@ -9,10 +9,13 @@ jobs:
 
     strategy:
       matrix:
-        java: [ '11', '17', '21' ]
+        java: [ '8', '11', '17', '21' ]
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        show-progress: false
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
@@ -27,4 +30,5 @@ jobs:
     - name: ./gradlew requireJavadoc
       run: ./gradlew requireJavadoc
     - name: ./gradlew spotlessCheck
+      if: ${{ matrix.java != '8' }}
       run: ./gradlew spotlessCheck
