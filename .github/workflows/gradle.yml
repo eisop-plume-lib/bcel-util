@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        java: [ '11', '17', '21', '22' ]
+        java: [ '8', '11', '17', '21' ]
 
     steps:
     - uses: actions/checkout@v4
@@ -30,4 +30,5 @@ jobs:
     - name: ./gradlew requireJavadoc
       run: ./gradlew requireJavadoc
     - name: ./gradlew spotlessCheck
+      if: ${{ matrix.java != '8' }}
       run: ./gradlew spotlessCheck
