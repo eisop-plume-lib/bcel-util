@@ -31,7 +31,7 @@ repositories {
   maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
-ext.errorproneVersion = '2.31.0'
+ext.errorproneVersion = '2.36.0'
 
 ext {
   isJava11orHigher = JavaVersion.current() >= JavaVersion.VERSION_11
