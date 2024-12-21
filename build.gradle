@@ -120,7 +120,7 @@ if (true) {
 } else {
   // To use a snapshot version of the EISOP Checker Framework.
   // TODO: Change the above test to false to use a snapshot.
-  ext.checkerFrameworkVersion = '3.42.0-eisop4'
+  ext.checkerFrameworkVersion = '3.42.0-eisop5'
   configurations.all {
     resolutionStrategy.cacheChangingModulesFor 0, 'minutes'
   }
