@@ -28,7 +28,7 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral()
-  maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+  maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 
@@ -207,7 +207,7 @@ javadoc {
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
-  description 'Upload API documentation to website.'
+  description = 'Upload API documentation to website.'
   source = sourceSets.main.allJava
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
@@ -247,7 +247,7 @@ javadocWeb.dependsOn requireJavadoc
 // Git hooks
 
 task installGitHooks(type: Copy) {
-  description 'Copies git hooks to .git directory'
+  description = 'Copies git hooks to .git directory'
   from 'githooks'
   into '.git/hooks'
 }
@@ -260,6 +260,6 @@ tasks.withType(JavaCompile) {
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description 'Run etags to create an Emacs TAGS table'
+  description = 'Run etags to create an Emacs TAGS table'
   commandLine 'bash', '-c', "find src/ -name '*.java' | sort | xargs etags"
 }
