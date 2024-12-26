@@ -13,7 +13,7 @@ plugins {
   id 'java-library'
 
   // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
-  id 'com.github.johnrengelman.shadow' version '8.1.1'
+  id 'com.gradleup.shadow' version '8.3.5'
 
   // Error Prone linter
   id('net.ltgt.errorprone') version '4.1.0'
@@ -28,13 +28,15 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral()
-  maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+  maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
-ext.errorproneVersion = '2.31.0'
 
 ext {
+  errorproneVersion = '2.36.0'
   isJava11orHigher = JavaVersion.current() >= JavaVersion.VERSION_11
+  isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
+  isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
 }
 
 dependencies {
@@ -94,7 +96,7 @@ if (isJava11orHigher) {
   }
 }
 
-/// Error Prone linter
+// Error Prone linter
 
 tasks.withType(JavaCompile).configureEach {
   // "-processing" avoids javac warning "No processor claimed any of these annotations".
@@ -108,15 +110,16 @@ tasks.withType(JavaCompile).configureEach {
     // Code copied from BCEL that we don't want to change gratuitously.
     excludedPaths = '.*/org/plumelib/bcelutil/StackVer.java'
   }
+  options.errorprone.enabled = isJava17orHigher
 }
 
-/// Checker Framework pluggable type-checking
+// Checker Framework pluggable type-checking
 
 apply plugin: 'org.checkerframework'
 
 if (true) {
   // Use the released version of the EISOP Checker Framework.
-  ext.checkerFrameworkVersion = '3.42.0-eisop3'
+  ext.checkerFrameworkVersion = '3.42.0-eisop5'
 } else {
   // To use a snapshot version of the EISOP Checker Framework.
   // TODO: Change the above test to false to use a snapshot.
@@ -169,7 +172,7 @@ checkerFramework {
   ]
 }
 
-/// Javadoc
+// Javadoc
 
 // Turn Javadoc warnings into errors.
 javadoc {
@@ -204,7 +207,7 @@ javadoc {
 check.dependsOn javadoc
 
 task javadocWeb(type: Javadoc) {
-  description 'Upload API documentation to website.'
+  description = 'Upload API documentation to website.'
   source = sourceSets.main.allJava
   destinationDir = file("/cse/web/research/plumelib/${project.name}/api")
   classpath = project.sourceSets.main.compileClasspath
@@ -241,10 +244,10 @@ check.dependsOn requireJavadoc
 javadocWeb.dependsOn requireJavadoc
 
 
-/// Git hooks
+// Git hooks
 
 task installGitHooks(type: Copy) {
-  description 'Copies git hooks to .git directory'
+  description = 'Copies git hooks to .git directory'
   from 'githooks'
   into '.git/hooks'
 }
@@ -253,10 +256,10 @@ tasks.withType(JavaCompile) {
   dependsOn(':installGitHooks')
 }
 
-/// Emacs support
+// Emacs support
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description 'Run etags to create an Emacs TAGS table'
+  description = 'Run etags to create an Emacs TAGS table'
   commandLine 'bash', '-c', "find src/ -name '*.java' | sort | xargs etags"
 }
