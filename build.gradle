@@ -4,7 +4,7 @@ buildscript {
       // Code formatting; defines targets "spotlessApply" and "spotlessCheck".
       // https://github.com/diffplug/spotless/tags ; see tags starting "gradle/"
       // Only works on JDK 11+.
-      classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.25.0'
+      classpath 'com.diffplug.spotless:spotless-plugin-gradle:7.0.1'
     }
   }
 }
@@ -102,7 +102,6 @@ tasks.withType(JavaCompile).configureEach {
   // "-processing" avoids javac warning "No processor claimed any of these annotations".
   // "-Xlint:-options" is because of JDK 21 warning "source value 8 is obsolete..."
   options.compilerArgs << '-Xlint:all,-processing,-options' << '-Werror'
-  options.errorprone.enabled = isJava11orHigher
   options.errorprone {
     disable('ExtendsObject')  // Incorrect when using the Checker Framework
     disable('ReferenceEquality') // Use Interning Checker instead.
