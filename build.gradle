@@ -108,7 +108,7 @@ apply plugin: 'org.checkerframework'
 
 if (true) {
   // Use the released version of the EISOP Checker Framework.
-  ext.checkerFrameworkVersion = '3.42.0-eisop5'
+  ext.checkerFrameworkVersion = '3.49.3-eisop1'
 } else {
   // To use a snapshot version of the EISOP Checker Framework.
   // TODO: Change the above test to false to use a snapshot.
