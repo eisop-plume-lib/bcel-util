@@ -5,7 +5,7 @@ plugins {
   id 'com.gradleup.shadow' version '8.3.7'
 
   // Error Prone linter
-  id 'net.ltgt.errorprone'  version '4.2.0'
+  id 'net.ltgt.errorprone'  version '4.3.0'
 
   // Checker Framework pluggable type-checking
   id 'org.checkerframework' version '0.6.55'
