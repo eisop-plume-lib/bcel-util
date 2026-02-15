@@ -8,7 +8,7 @@ plugins {
   id 'net.ltgt.errorprone'  version '5.0.0'
 
   // Checker Framework pluggable type-checking
-  id 'org.checkerframework' version '0.6.61'
+  id 'org.checkerframework' version '1.0.2'
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
   id 'com.dorongold.task-tree' version '4.0.1'
