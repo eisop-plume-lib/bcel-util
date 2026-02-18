@@ -37,6 +37,7 @@ repositories {
 
 ext {
   errorproneVersion = "2.47.0"
+  eisopVersion = "3.49.3-eisop1"
   isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
   isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
 }
@@ -47,6 +48,10 @@ dependencies {
   // implementation fileTree(dir: "$System.env.BCEL/target", include: "bcel-6.2.0.2.jar")
 
   implementation("org.plumelib:reflection-util:1.1.5")
+
+  // EISOP Checker Framework dependencies
+  checkerQual("io.github.eisop:checker-qual:${eisopVersion}")
+  checkerFramework("io.github.eisop:checker:${eisopVersion}")
 
   testImplementation("org.junit.jupiter:junit-jupiter:6.0.3")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -160,7 +165,7 @@ pmd {
 apply plugin: "org.checkerframework"
 
 checkerFramework {
-  version = libs.checker.get().version
+  version = "dependencies"
   checkers = [
     // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
     // "org.checkerframework.checker.calledmethods.CalledMethodsChecker",
