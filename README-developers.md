@@ -21,9 +21,9 @@ Run these steps on any filesystem, except the `javadocWeb` step.
 * Make and test a snapshot release, see below.
 * git pull
 * In `build.gradle`, ensure that "To use a snapshot version" is not enabled.
-* Update the version number in `README.md`, `build.gradle`, and in this file
+* Update the version number in `README.md`, `gradle.properties`, and in this file
   (multiple times in each).
-  Ensure the version number in `build.gradle` does not contain "-SNAPSHOT".
+  Ensure the version number in `gradle.properties` does not contain "-SNAPSHOT".
 * Update `CHANGELOG.md`.
 * Save files and stage changes.
 * ./gradlew publishToMavenCentral
