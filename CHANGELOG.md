@@ -1,9 +1,15 @@
 # BCEL-Util change log
 
+## 1.2.4 (??)
+
+- Tested under Java 25
+- Compiles and runs under Java 8.
+- Deprecate `BcelUtil.postpendToArray()`
+
 ## 1.2.3 (June 5, 2025)
 
 - Tested under Java 24
-- Both compiles and runs under Java 8.
+- Compiles and runs under Java 8.
 
 ## 1.2.2 (May 15, 2022)
 
@@ -13,9 +19,10 @@
 ## 1.2.1 (December 13, 2022)
 
 Removed deprecated methods:
- * add_new_argument
- * fetch_current_stack_map_table
- * classnameToType
+
+- `add_new_argument`
+- `fetch_current_stack_map_table`
+- `classnameToType`
 
 Removed problematic dependency on `error_prone_core`.
 
@@ -35,7 +42,8 @@ This is a huge incompatibility with the previous version, 1.1.16.
 
 ## 1.1.14 (December 29, 2021)
 
-- Builds and runs under JDK 17, but not JDK 16.  (Still builds and runs under JDK 8 and 11.)
+- Builds and runs under JDK 17, but not JDK 16.
+  (Still builds and runs under JDK 8 and 11.)
 
 ## 1.1.13 (July 22, 2021)
 

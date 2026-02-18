@@ -72,7 +72,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *        buildUninitializedNewMap(il);
  *
  * This is where you would insert your code to modify the current method (mg).
- * Most often this is done with members of the {@link org.apache.bcel.generic}
+ * Most often this is done with members of the {@code org.apache.bcel.generic}
  * package.  However, you should use the members of InstrutionListUtils to update
  * the byte code instructions of mg rather than similar methods in the BCEL
  * generic package in order to maintain the integrity of the method's StackMapTable.
@@ -103,7 +103,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *  }
  * </pre>
  *
- * <p>It one only wishes to examine a class file, the use of this class is not necessary. See {@link
+ * <p>If one only wishes to examine a class file, the use of this class is not necessary. See {@link
  * org.plumelib.bcelutil.BcelUtil} for notes on inspecting a Java class file.
  */
 @SuppressWarnings("nullness")
@@ -117,8 +117,8 @@ public abstract class InstructionListUtils extends StackMapUtils {
    * reason you can't directly append jump instructions to the list -- but you can create new ones
    * and append them.
    *
-   * @param il InstructionList to be modified
-   * @param inst Instruction to be appended
+   * @param il the InstructionList to be modified
+   * @param inst the Instruction to be appended
    */
   protected final void append_inst(InstructionList il, Instruction inst) {
 

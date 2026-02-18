@@ -52,7 +52,7 @@ import org.checkerframework.dataflow.qual.Pure;
  * is an abstract class extended by {@link org.plumelib.bcelutil.InstructionListUtils}. A client
  * would not normally extend this class directly.
  */
-@SuppressWarnings("nullness")
+@SuppressWarnings({"nullness", "PMD.AbstractClassWithoutAbstractMethod", "PMD.TooManyFields"})
 public abstract class StackMapUtils {
 
   /** Create a new StackMapUtils object. */
@@ -89,13 +89,13 @@ public abstract class StackMapUtils {
   /** A log to which to print debugging information about program instrumentation. */
   protected SimpleLog debugInstrument = new SimpleLog(false);
 
-  /** Whether or not the current method needs a StackMap; set by setCurrentStackMapTable. */
+  /** True if the current method needs a StackMap; set by {@link #setCurrentStackMapTable}. */
   protected boolean needStackMap = false;
 
-  /** Working copy of StackMapTable; set by setCurrentStackMapTable. */
+  /** Working copy of StackMapTable; set by {@link #setCurrentStackMapTable}. */
   protected StackMapEntry @Nullable [] stackMapTable = null;
 
-  /** Original stack map table attribute; set by setCurrentStackMapTable. */
+  /** Original stack map table attribute; set by {@link #setCurrentStackMapTable}. */
   protected @Nullable StackMap smta = null;
 
   /** Initial state of StackMapTypes for locals on method entry. */
@@ -142,16 +142,13 @@ public abstract class StackMapUtils {
    * @return the new string array
    */
   protected String[] addString(String[] arr, String newString) {
-    String[] newArr = new String[arr.length + 1];
-    for (int ii = 0; ii < arr.length; ii++) {
-      newArr[ii] = arr[ii];
-    }
+    String[] newArr = Arrays.copyOf(arr, arr.length + 1);
     newArr[arr.length] = newString;
     return newArr;
   }
 
   /**
-   * Return the attribute name for the specified attribute.
+   * Returns the attribute name for the specified attribute.
    *
    * @param a the attribute
    * @return the attribute name for the specified attribute
@@ -165,7 +162,7 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Returns whether or not the specified attribute is a LocalVariableTypeTable.
+   * Returns true if the specified attribute is a LocalVariableTypeTable.
    *
    * @param a the attribute
    * @return true iff the attribute is a LocalVariableTypeTable
@@ -176,7 +173,7 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Returns whether or not the specified attribute is a StackMapTable.
+   * Returns true if the specified attribute is a StackMapTable.
    *
    * @param a the attribute
    * @return true iff the attribute is a StackMapTable
@@ -239,11 +236,11 @@ public abstract class StackMapUtils {
   protected final void updateStackMapOffset(int position, int delta) {
 
     runningOffset = -1; // no +1 on first entry
-    for (int i = 0; i < stackMapTable.length; i++) {
-      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
+    for (StackMapEntry entry : stackMapTable) {
+      runningOffset = entry.getByteCodeOffset() + runningOffset + 1;
 
       if (runningOffset > position) {
-        stackMapTable[i].updateByteCodeOffset(delta);
+        entry.updateByteCodeOffset(delta);
         // Only update the first StackMap that occurs after the given
         // offset as map offsets are relative to previous map entry.
         return;
@@ -260,21 +257,20 @@ public abstract class StackMapUtils {
   protected final StackMapEntry findStackMapEqual(int offset) {
 
     runningOffset = -1; // no +1 on first entry
-    for (int i = 0; i < stackMapTable.length; i++) {
-      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
+    for (StackMapEntry entry : stackMapTable) {
+      runningOffset = entry.getByteCodeOffset() + runningOffset + 1;
 
       if (runningOffset > offset) {
-        throw new RuntimeException("Invalid StackMap offset 1");
+        throw new RuntimeException("Invalid StackMap offset " + runningOffset + " > " + offset);
       }
 
       if (runningOffset == offset) {
-        return stackMapTable[i];
+        return entry;
       }
       // try next map entry
     }
 
-    // no offset matched
-    throw new RuntimeException("Invalid StackMap offset 2");
+    throw new RuntimeException("No offset matched");
   }
 
   /**
@@ -438,7 +434,7 @@ public abstract class StackMapUtils {
    * @param oldOffset original location of NEW instruction
    * @param newOffset new location of NEW instruction
    */
-  private final void updateNewObjectStackMapEntries(int oldOffset, int newOffset) {
+  private void updateNewObjectStackMapEntries(int oldOffset, int newOffset) {
 
     for (StackMapEntry smte : stackMapTable) {
       int frameType = smte.getFrameType();
@@ -482,7 +478,7 @@ public abstract class StackMapUtils {
 
     for (Map.Entry<InstructionHandle, Integer> e : uninitializedNewMap.entrySet()) {
       InstructionHandle ih = e.getKey();
-      int oldOffset = e.getValue().intValue();
+      int oldOffset = e.getValue();
       int newOffset = ih.getPosition();
       if (oldOffset != newOffset) {
         updateNewObjectStackMapEntries(oldOffset, newOffset);
@@ -534,15 +530,15 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Get existing StackMapTable from the MethodGen argument. If there is none, create a new empty
-   * one. Sets both smta and stackMapTable. Must be called prior to any other methods that
-   * manipulate the stackMapTable!
+   * Sets the {@link #stackMapTable} and {@link #smta} fields from the MethodGen argument. If there
+   * is none, create a new empty one. Must be called prior to any other methods that manipulate the
+   * stackMapTable!
    *
    * @param mgen MethodGen to search
    * @param javaClassVersion Java version for the classfile; stackMapTable is optional before Java
    *     1.7 (= classfile version 51)
    */
-  @EnsuresNonNull({"stackMapTable"})
+  @EnsuresNonNull({"stackMapTable", "smta"})
   protected final void setCurrentStackMapTable(MethodGen mgen, int javaClassVersion) {
 
     needStackMap = false;
@@ -575,9 +571,9 @@ public abstract class StackMapUtils {
 
     debugInstrument.log("%nStackMap(%s) %s items:%n", prefix, stackMapTable.length);
     runningOffset = -1; // no +1 on first entry
-    for (int i = 0; i < stackMapTable.length; i++) {
-      runningOffset = stackMapTable[i].getByteCodeOffset() + runningOffset + 1;
-      debugInstrument.log("@%03d %s %n", runningOffset, stackMapTable[i]);
+    for (StackMapEntry entry : stackMapTable) {
+      runningOffset = entry.getByteCodeOffset() + runningOffset + 1;
+      debugInstrument.log("@%03d %s %n", runningOffset, entry);
     }
   }
 
@@ -628,7 +624,7 @@ public abstract class StackMapUtils {
   /**
    * Convert a Type to a StackMapType.
    *
-   * @param t Type to be converted
+   * @param t the Type to be converted
    * @return result StackMapType
    */
   protected final StackMapType generateStackMapTypeFromType(Type t) {
@@ -698,7 +694,7 @@ public abstract class StackMapUtils {
   }
 
   /**
-   * Return the operand size of this type (2 for long and double, 1 otherwise).
+   * Returns the operand size of this type (2 for long and double, 1 otherwise).
    *
    * @param smt a StackMapType object
    * @return the operand size of this type
@@ -725,12 +721,12 @@ public abstract class StackMapUtils {
       int offset, Type typeNewVar, LocalVariableGen[] locals) {
     @NonNegative int index; // locals index
 
-    for (int i = 0; i < stackMapTable.length; i++) {
-      if (stackMapTable[i].getFrameType() == Const.FULL_FRAME) {
+    for (StackMapEntry entry : stackMapTable) {
+      if (entry.getFrameType() == Const.FULL_FRAME) {
 
-        int numLocals = stackMapTable[i].getNumberOfLocals();
+        int numLocals = entry.getNumberOfLocals();
         StackMapType[] newLocalTypes = new StackMapType[numLocals + 1];
-        StackMapType[] oldLocalTypes = stackMapTable[i].getTypesOfLocals();
+        StackMapType[] oldLocalTypes = entry.getTypesOfLocals();
 
         // System.out.printf ("update_full_frame %s %s %s %n", offset, numLocals, locals.length);
 
@@ -746,12 +742,9 @@ public abstract class StackMapUtils {
           newLocalTypes[index] = oldLocalTypes[index];
         }
         newLocalTypes[index++] = generateStackMapTypeFromType(typeNewVar);
-        while (index <= numLocals) {
-          newLocalTypes[index] = oldLocalTypes[index - 1];
-          index++;
-        }
+        System.arraycopy(oldLocalTypes, index - 1, newLocalTypes, index, numLocals - index + 1);
 
-        stackMapTable[i].setTypesOfLocals(newLocalTypes);
+        entry.setTypesOfLocals(newLocalTypes);
       }
     }
   }
@@ -813,7 +806,9 @@ public abstract class StackMapUtils {
     initialLocalsCount++;
 
     // Update the method's parameter information.
-    argTypes = BcelUtil.postpendToArray(argTypes, argType);
+    @SuppressWarnings("deprecation") // use within the package is OK
+    Type[] newArgTypes = BcelUtil.postpendToArray(argTypes, argType);
+    argTypes = newArgTypes;
     String[] argNames = addString(mgen.getArgumentNames(), argName);
     mgen.setArgumentTypes(argTypes);
     mgen.setArgumentNames(argNames);
@@ -1011,6 +1006,7 @@ public abstract class StackMapUtils {
    *
    * @param mgen MethodGen to be modified
    */
+  @SuppressWarnings("PMD.AvoidReassigningLoopVariables")
   @EnsuresNonNull("initialTypeList")
   protected final void fixLocalVariableTable(MethodGen mgen) {
     InstructionList il = mgen.getInstructionList();
@@ -1078,13 +1074,13 @@ public abstract class StackMapUtils {
     }
 
     // Loop through each parameter
-    for (int ii = 0; ii < argTypes.length; ii++) {
+    for (Type argType : argTypes) {
 
       // If this parameter doesn't have a matching local
       if ((locIndex >= locals.length) || (offset != locals[locIndex].getIndex())) {
 
         // Create a local variable to describe the missing parameter
-        newLvg = mgen.addLocalVariable("$hidden$" + offset, argTypes[ii], offset, null, null);
+        newLvg = mgen.addLocalVariable("$hidden$" + offset, argType, offset, null, null);
       } else {
         l = locals[locIndex];
         newLvg = mgen.addLocalVariable(l.getName(), l.getType(), l.getIndex(), null, null);
@@ -1093,7 +1089,7 @@ public abstract class StackMapUtils {
       debugInstrument.log(
           "Added param  %s%n",
           newLvg.getIndex() + ": " + newLvg.getName() + ", " + newLvg.getType());
-      offset += argTypes[ii].getSize();
+      offset += argType.getSize();
     }
 
     // At this point the LocalVaraibles contain:
@@ -1176,9 +1172,8 @@ public abstract class StackMapUtils {
     int minSize = 3; // only sizes are 1 or 2; start with something larger.
 
     numberActiveLocals = initialLocalsCount;
-    StackMapType[] typesOfActiveLocals = new StackMapType[numberActiveLocals];
+    StackMapType[] typesOfActiveLocals = Arrays.copyOf(initialTypeList, initialTypeList.length);
     for (int ii = 0; ii < numberActiveLocals; ii++) {
-      typesOfActiveLocals[ii] = initialTypeList[ii];
       localsOffsetHeight += getSize(initialTypeList[ii]);
     }
 

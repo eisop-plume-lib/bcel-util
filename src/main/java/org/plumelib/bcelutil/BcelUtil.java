@@ -3,7 +3,6 @@ package org.plumelib.bcelutil;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.bcel.Const;
@@ -68,6 +67,7 @@ public final class BcelUtil {
    * @return the major version of the Java runtime
    */
   private static int getJavaVersion() {
+
     String version = System.getProperty("java.version");
 
     // Up to Java 8, from a version string like "1.8.whatever", extract "8".
@@ -118,17 +118,18 @@ public final class BcelUtil {
     if (argsExist) {
       sb.setLength(sb.length() - 2); // remove trailing ", "
     }
-    sb.append(")");
+    sb.append(')');
     return sb.toString();
   }
 
   /**
-   * Return a string representation of the access flags of method m. In the string, the flags are
+   * Returns a string representation of the access flags of method m. In the string, the flags are
    * space-separated and in a canonical order.
    *
    * @param m the method whose access flags to retrieve
    * @return a string representation of the access flags of method m
    */
+  @SuppressWarnings({"PMD.AvoidReassigningLoopVariables", "PMD.ForLoopVariableCount"})
   static String accessFlagsToString(Method m) {
 
     int flags = m.getAccessFlags();
@@ -138,7 +139,7 @@ public final class BcelUtil {
     for (int i = 0, pow = 1; i <= Const.MAX_ACC_FLAG_I; i++) {
       if ((flags & pow) != 0) {
         if (buf.length() > 0) {
-          buf.append(" ");
+          buf.append(' ');
         }
         if (i < Const.ACCESS_NAMES_LENGTH) {
           buf.append(Const.getAccessName(i));
@@ -153,7 +154,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return a printed description of the given instructions.
+   * Returns a printed description of the given instructions.
    *
    * @param il the instructions to describe
    * @param pool the constant pool the instructions refer to
@@ -162,15 +163,15 @@ public final class BcelUtil {
   public static String instructionListToString(InstructionList il, ConstantPoolGen pool) {
 
     StringBuilder out = new StringBuilder();
-    for (Iterator<InstructionHandle> i = il.iterator(); i.hasNext(); ) {
-      InstructionHandle handle = i.next();
-      out.append(handle.getInstruction().toString(pool.getConstantPool()) + "\n");
+    for (InstructionHandle handle : il) {
+      out.append(handle.getInstruction().toString(pool.getConstantPool()));
+      out.append('\n');
     }
     return out.toString();
   }
 
   /**
-   * Return a description of the local variables (one per line).
+   * Returns a description of the local variables (one per line).
    *
    * @param mg the method whose local variables to describe
    * @return a description of the local variables (one per line)
@@ -189,7 +190,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the attribute name for the specified attribute, looked up in the original class file
+   * Returns the attribute name for the specified attribute, looked up in the original class file
    * ConstantPool.
    *
    * @param a the attribute
@@ -205,7 +206,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the attribute name for the specified attribute, looked up in the given ConstantPoolGen.
+   * Returns the attribute name for the specified attribute, looked up in the given ConstantPoolGen.
    *
    * @param a the attribute
    * @param pool the constant pool
@@ -222,7 +223,7 @@ public final class BcelUtil {
   // 'is' (boolean test) methods
 
   /**
-   * Returns whether or not the method is a constructor.
+   * Returns true if the method is a constructor.
    *
    * @param mg the MethodGen to test
    * @return true iff the method is a constructor
@@ -235,7 +236,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a constructor.
+   * Returns true if the method is a constructor.
    *
    * @param m the Method to test
    * @return true iff the method is a constructor
@@ -248,7 +249,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a class initializer.
+   * Returns true if the method is a class initializer.
    *
    * @param mg the method to test
    * @return true iff the method is a class initializer
@@ -258,7 +259,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the method is a class initializer.
+   * Returns true if the method is a class initializer.
    *
    * @param m the method to test
    * @return true iff the method is a class initializer
@@ -268,7 +269,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param gen the class to test
    * @return true iff the class is in a package that is in the JDK (rt.jar)
@@ -278,7 +279,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param classname the class to test, in the format of Class.getName(); the class should not be
    *     an array
@@ -303,7 +304,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the class is part of the JDK (rt.jar).
+   * Returns true if the class is part of the JDK (rt.jar).
    *
    * @param classname the class to test, in internal form
    * @return true iff the class is part of the JDK (rt.jar)
@@ -327,7 +328,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not the specified attribute is a local variable type table.
+   * Returns true if the specified attribute is a local variable type table.
    *
    * @param a the attribute
    * @param pool the constant pool
@@ -338,8 +339,8 @@ public final class BcelUtil {
   }
 
   /**
-   * Returns whether or not this is a standard main method (static, void, name is 'main', and one
-   * formal parameter: a string array).
+   * Returns true if this is a standard main method (static, void, name is 'main', and one formal
+   * parameter: a string array).
    *
    * @param mg the method to check
    * @return true iff the method is a main method
@@ -369,7 +370,7 @@ public final class BcelUtil {
     }
 
     try {
-      @SuppressWarnings("UnusedVariable")
+      @SuppressWarnings({"UnusedVariable", "PMD.UnusedLocalVariable"})
       String ignore = mgen.toString(); // ensure it can be formatted without exceptions
       mgen.getLineNumberTable(mgen.getConstantPool());
 
@@ -412,18 +413,15 @@ public final class BcelUtil {
     }
 
     Method[] methods = gen.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      Method method = methods[i];
+    for (Method method : methods) {
       // System.out.println ("Checking method " + method + " in class "
       // + gen.getClassName());
       checkMgen(new MethodGen(method, gen.getClassName(), gen.getConstantPool()));
     }
 
     // Diagnostic output
-    if (false) {
-      dumpStackTrace();
-      dumpMethods(gen);
-    }
+    // dumpStackTrace();
+    // dumpMethods(gen);
   }
 
   // 'dump' methods
@@ -688,7 +686,9 @@ public final class BcelUtil {
    * @param types the array to extend
    * @param newType the element to add to the end of the array
    * @return a new array, with newType at the end
+   * @deprecated use ArraysPlume.append()
    */
+  @Deprecated // 2025-11-26; to make package-private
   public static Type[] postpendToArray(Type[] types, Type newType) {
     if (types.length == Integer.MAX_VALUE) {
       throw new Error("array " + Arrays.toString(types) + " is too large to extend");
@@ -717,7 +717,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the type corresponding to a given binary name or primitive type name.
+   * Returns the type corresponding to a given binary name or primitive type name.
    *
    * @param classname the binary name of a class (= fully-qualified name, except for inner classes),
    *     or a primitive type name, but not an array
@@ -726,23 +726,21 @@ public final class BcelUtil {
    */
   public static Type binaryNameToType(@BinaryNameOrPrimitiveType String classname) {
 
-    classname = classname.intern();
-
-    if (classname == "int") { // interned
+    if (classname.equals("int")) {
       return Type.INT;
-    } else if (classname == "boolean") { // interned
+    } else if (classname.equals("boolean")) {
       return Type.BOOLEAN;
-    } else if (classname == "byte") { // interned
+    } else if (classname.equals("byte")) {
       return Type.BYTE;
-    } else if (classname == "char") { // interned
+    } else if (classname.equals("char")) {
       return Type.CHAR;
-    } else if (classname == "double") { // interned
+    } else if (classname.equals("double")) {
       return Type.DOUBLE;
-    } else if (classname == "float") { // interned
+    } else if (classname.equals("float")) {
       return Type.FLOAT;
-    } else if (classname == "long") { // interned
+    } else if (classname.equals("long")) {
       return Type.LONG;
-    } else if (classname == "short") { // interned
+    } else if (classname.equals("short")) {
       return Type.SHORT;
     } else {
       @SuppressWarnings("signature") // It's not a primitive, so it's a proper binary name.
@@ -752,7 +750,7 @@ public final class BcelUtil {
   }
 
   /**
-   * Return the type corresponding to a given fully-qualified binary name.
+   * Returns the type corresponding to a given fully-qualified binary name.
    *
    * @param classname the fully-qualified binary name of a type, which is like a
    *     fully-qualified-name but uses "$" rather than "." for nested classes
