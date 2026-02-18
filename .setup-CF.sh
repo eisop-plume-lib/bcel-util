@@ -7,7 +7,7 @@ set -e
 
 export SHELLOPTS
 
-export JAVA_HOME="${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which javac))))}"
+export JAVA_HOME="${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(which javac)")")")}"
 
 git -C /tmp clone --depth 1 -q https://github.com/eisop-plume-lib/git-scripts.git
 
