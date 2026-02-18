@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
+echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in $(pwd)
 
 # Fail the whole script if any command fails
 set -e
@@ -18,4 +18,4 @@ export CHECKERFRAMEWORK="${CHECKERFRAMEWORK:-$(pwd -P)/../checker-framework}"
 
 (cd $CHECKERFRAMEWORK && ./gradlew assembleForJavac)
 
-echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
+echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in $(pwd)
