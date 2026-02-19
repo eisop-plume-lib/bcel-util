@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        java: ['8', '11', '17', '21', '24']
+        java: ['8', '11', '17', '21', '25']
 
     steps:
       - uses: actions/checkout@v6
@@ -21,11 +21,15 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 21
+          check-latest: true
+          cache: 'gradle'
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
+          check-latest: true
+          cache: 'gradle'
       - name: Use JDK 21 for Gradle
         run: mkdir -p ~/.gradle && echo "org.gradle.java.home=$JAVA_HOME_21_X64" >> ~/.gradle/gradle.properties
       - name: Version information
