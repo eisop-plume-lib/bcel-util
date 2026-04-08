@@ -36,7 +36,7 @@ repositories {
 
 
 ext {
-  errorproneVersion = "2.48.0"
+  errorproneVersion = "2.49.0"
   eisopVersion = "3.49.3-eisop1"
   isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
   isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
