@@ -21,7 +21,7 @@ plugins {
   id("org.checkerframework").version("1.0.2")
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
-  id("com.dorongold.task-tree").version("4.0.1")
+  id("com.dorongold.task-tree").version("4.0.2")
 
   // Publishing to Maven Central.
   id("com.vanniktech.maven.publish").version("0.37.0")
