@@ -106,7 +106,7 @@ spotless {
   }
   groovyGradle {
     target("**/*.gradle")
-    greclipse()  // which formatter Spotless should use to format .gradle files.
+    greclipse() // which formatter Spotless should use to format .gradle files.
     leadingTabsToSpaces(2)
     trimTrailingWhitespace()
     // endWithNewline() // Don't want to end empty files with a newline
@@ -136,7 +136,7 @@ if (isJava21orHigher) {
       disable("AnnotateFormatMethod") // Error Prone doesn't know about Checker Framework @FormatMethod.
       disable("DoNotCallSuggester") // Suggests use of an Error Prone annotation.
       disable("EffectivelyPrivate") // Loses information about the abstraction.
-      disable("ExtendsObject")  // Incorrect when using the Checker Framework.
+      disable("ExtendsObject") // Incorrect when using the Checker Framework.
       disable("InlineMeSuggester") // Using `@InlineMe` requires clients to declare a dependency on error_prone_annotations.
       disable("PatternMatchingInstanceof") // requires Java 16 or later
       disable("ReferenceEquality") // Use Interning Checker instead.
@@ -221,8 +221,8 @@ javadoc {
   }
   options.addStringOption("source", "8")
   doLast {
-    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
-    flags:"g", byline:true) {
+    ant.replaceregexp(match: "@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace: "",
+    flags: "g", byline: true) {
       fileset(dir: destinationDir)
     }
   }
@@ -239,20 +239,20 @@ tasks.register("javadocWebUpload", Javadoc) {
   classpath = project.sourceSets.main.compileClasspath
   options.addStringOption("source", "8")
   doLast {
-    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
-    flags:"g", byline:true) {
+    ant.replaceregexp(match: "@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace: "",
+    flags: "g", byline: true) {
       fileset(dir: destinationDir)
     }
   }
 }
 // Set permissions
 tasks.register("javadocWebChgrp", Exec) {
-  commandLine("chgrp", "-R",  "plse_www", "/cse/web/research/plumelib/${project.name}/api")
+  commandLine("chgrp", "-R", "plse_www", "/cse/web/research/plumelib/${project.name}/api")
   ignoreExitValue = true
 }
 javadocWebChgrp.mustRunAfter("javadocWebUpload")
 tasks.register("javadocWebChmod", Exec) {
-  commandLine("chmod", "-R",  "g+w", "/cse/web/research/plumelib/${project.name}/api")
+  commandLine("chmod", "-R", "g+w", "/cse/web/research/plumelib/${project.name}/api")
   ignoreExitValue = true
 }
 javadocWebChmod.mustRunAfter("javadocWebUpload")
