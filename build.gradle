@@ -18,7 +18,7 @@ plugins {
   id("jacoco")
 
   // Checker Framework pluggable type-checking
-  id("org.checkerframework").version("1.0.2")
+  id("org.checkerframework").version("1.0.2") apply false
 
   // To show task list as a tree, run: ./gradlew <taskname> taskTree
   id("com.dorongold.task-tree").version("4.0.2")
@@ -35,11 +35,34 @@ repositories {
 }
 
 
+def majorVersionToInt(majorVersionString) {
+  // ^(\d+) matches the first digit(s) at the start of the string.
+  def m = majorVersionString =~ /^(\d+)/
+  // If a match is found, use the whole match group [0][0] (the first digit(s)). Otherwise, use the original string.
+  majorVersionString = m ? m[0][0] : majorVersionString
+  return Integer.valueOf(majorVersionString)
+}
+
 ext {
+  // The int corresponding to the major version of the current JVM.
+  currentRuntimeJavaVersion = majorVersionToInt(JavaVersion.current().getMajorVersion())
+
+  String useJdkVersionProp = findProperty("useJdkVersion")
+  if (useJdkVersionProp == null) {
+    // If the property is not given, use the same version as the runtime.
+    useJdkVersionInt = currentRuntimeJavaVersion
+  } else {
+    useJdkVersionInt = majorVersionToInt(useJdkVersionProp)
+  }
+
   errorproneVersion = "2.50.0"
   eisopVersion = "3.49.5-eisop1"
-  isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
-  isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
+  isJava17orHigher = (useJdkVersionInt >= 17)
+  isJava21orHigher = (useJdkVersionInt >= 21)
+}
+
+if (useJdkVersionInt >= 11) {
+  apply plugin: "org.checkerframework"
 }
 
 dependencies {
@@ -53,13 +76,36 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
   // EISOP Checker Framework dependencies
-  checkerQual("io.github.eisop:checker-qual:${eisopVersion}")
-  checkerFramework("io.github.eisop:checker:${eisopVersion}")
+  if (useJdkVersionInt >= 11) {
+    checkerQual("io.github.eisop:checker-qual:${eisopVersion}")
+    checkerFramework("io.github.eisop:checker:${eisopVersion}")
+  } else {
+    compileOnly("io.github.eisop:checker-qual:${eisopVersion}")
+  }
 }
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+boolean useToolchains = (currentRuntimeJavaVersion != useJdkVersionInt)
+if (useToolchains) {
+  // This uses the requested Java toolchain.
+  // On CI, gradle always runs with JDK 21 and different versions are selected as toolchains.
+  //   https://docs.gradle.org/current/userguide/toolchains.html
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(useJdkVersionInt)
+    }
+  }
+
+  // JavaCompile also seems to need an extra push...
+  tasks.withType(JavaCompile).configureEach {
+    javaCompiler = javaToolchains.compilerFor {
+      languageVersion = JavaLanguageVersion.of(useJdkVersionInt)
+    }
+  }
 }
 
 test {
@@ -162,34 +208,35 @@ pmd {
 
 // Checker Framework pluggable type-checking
 
-apply plugin: "org.checkerframework"
-
-checkerFramework {
-  version = "dependencies"
-  checkers = [
-    // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
-    // "org.checkerframework.checker.calledmethods.CalledMethodsChecker",
-    "org.checkerframework.checker.formatter.FormatterChecker",
-    // TODO: "org.checkerframework.checker.index.IndexChecker",
-    "org.checkerframework.checker.interning.InterningChecker",
-    "org.checkerframework.checker.lock.LockChecker",
-    "org.checkerframework.checker.nullness.NullnessChecker",
-    "org.checkerframework.checker.regex.RegexChecker",
-    "org.checkerframework.checker.resourceleak.ResourceLeakChecker",
-    "org.checkerframework.checker.signature.SignatureChecker",
-    "org.checkerframework.checker.signedness.SignednessChecker",
-    "org.checkerframework.common.initializedfields.InitializedFieldsChecker",
-  ]
-  extraJavacArgs = [
-    // No "'-Werror'" because of JDK 21 warning "source value 8 is obsolete..."
-    // "-Werror",
-    // "-Aversion",
-    // "-verbose",
-    "-AcheckPurityAnnotations",
-    "-ArequirePrefixInWarningSuppressions",
-    "-AwarnRedundantAnnotations",
-    "-AwarnUnneededSuppressions",
-  ]
+if (useJdkVersionInt >= 11) {
+  checkerFramework {
+    version = "dependencies"
+    checkers = [
+      // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
+      // "org.checkerframework.checker.calledmethods.CalledMethodsChecker",
+      "org.checkerframework.checker.formatter.FormatterChecker",
+      // TODO: "org.checkerframework.checker.index.IndexChecker",
+      "org.checkerframework.checker.interning.InterningChecker",
+      "org.checkerframework.checker.lock.LockChecker",
+      "org.checkerframework.checker.nullness.NullnessChecker",
+      "org.checkerframework.checker.regex.RegexChecker",
+      "org.checkerframework.checker.resourceleak.ResourceLeakChecker",
+      "org.checkerframework.checker.signature.SignatureChecker",
+      "org.checkerframework.checker.signedness.SignednessChecker",
+      "org.checkerframework.common.initializedfields.InitializedFieldsChecker",
+    ]
+    extraJavacArgs = [
+      // No "'-Werror'" because of JDK 21 warning "source value 8 is obsolete..."
+      // "-Werror",
+      "-AnoJreVersionCheck",
+      // "-Aversion",
+      // "-verbose",
+      "-AcheckPurityAnnotations",
+      "-ArequirePrefixInWarningSuppressions",
+      "-AwarnRedundantAnnotations",
+      "-AwarnUnneededSuppressions",
+    ]
+  }
 }
 
 
@@ -267,6 +314,11 @@ dependencies {
 def requireJavadoc = tasks.register("requireJavadoc", JavaExec) {
   group = "Documentation"
   description = "Ensures that Javadoc documentation exists."
+  if (useJdkVersionInt < 17) {
+    javaLauncher = javaToolchains.launcherFor {
+      languageVersion = JavaLanguageVersion.of(21)
+    }
+  }
   inputs.files(sourceSets.main.allJava)
   mainClass = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
