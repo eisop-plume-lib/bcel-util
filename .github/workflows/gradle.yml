@@ -2,6 +2,9 @@ name: Java CI with Gradle
 
 on: [push, pull_request]   # yamllint disable-line rule:truthy
 
+env:
+  PRIMARY_JDK: "21"
+
 jobs:
   build:
 
@@ -11,29 +14,32 @@ jobs:
       matrix:
         java: ['8', '11', '17', '21', '25']
 
+    env:
+      ORG_GRADLE_PROJECT_useJdkVersion: ${{ matrix.java }}
+
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 1
           show-progress: false
-      - name: Set up JDK 21 for Gradle
+      - name: Set up primary JDK ${{ env.PRIMARY_JDK }}
         uses: actions/setup-java@v6
         with:
-          distribution: 'temurin'
-          java-version: 25.0.4+101.0.LTS
-          check-latest: true
-          cache: 'gradle'
-      - name: Set up JDK
+          distribution: 'zulu'
+          java-version: ${{ env.PRIMARY_JDK }}
+      - name: Set up stable target JDK ${{ matrix.java }}
+        if: ${{ matrix.java != env.PRIMARY_JDK }}
         uses: actions/setup-java@v6
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: ${{ matrix.java }}
-          check-latest: true
-          cache: 'gradle'
-      - name: Use JDK 21 for Gradle
-        run: mkdir -p ~/.gradle && echo "org.gradle.java.home=$JAVA_HOME_21_X64" >> ~/.gradle/gradle.properties
-      - name: Version information
-        run: java -version && ./gradlew -version
+      - name: Pin Gradle to primary JDK via gradle.properties
+        if: ${{ matrix.java != env.PRIMARY_JDK }}
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.java.home=$JAVA_HOME_${{ env.PRIMARY_JDK }}_X64" >> ~/.gradle/gradle.properties
+      - name: Output version information to debug CI
+        run: which java && ./gradlew --version
       - name: ./gradlew build
         run: ./gradlew build
       - name: Setup local CF
