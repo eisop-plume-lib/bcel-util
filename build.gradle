@@ -55,7 +55,7 @@ ext {
     useJdkVersionInt = majorVersionToInt(useJdkVersionProp)
   }
 
-  errorproneVersion = "2.50.0"
+  errorproneVersion = "2.51.0"
   eisopVersion = "3.49.5-eisop1"
   isJava17orHigher = (useJdkVersionInt >= 17)
   isJava21orHigher = (useJdkVersionInt >= 21)
