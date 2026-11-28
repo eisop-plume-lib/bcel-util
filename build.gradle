@@ -56,7 +56,7 @@ ext {
   }
 
   errorproneVersion = "2.53.0"
-  eisopVersion = "3.49.5-eisop1"
+  eisopVersion = "3.55.1-eisop1"
   isJava17orHigher = (useJdkVersionInt >= 17)
   isJava21orHigher = (useJdkVersionInt >= 21)
 }
